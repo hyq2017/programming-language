@@ -1,0 +1,84 @@
+
+(* Dan Grossman, Coursera PL, HW2 Provided Code *)
+
+(* if you use this function to compare two strings (returns true if the same
+   string), then you avoid several of the functions in problem 1 having
+   polymorphic types that may be confusing *)
+fun same_string(s1 : string, s2 : string) =
+    s1 = s2
+
+(* put your solutions for problem 1 here *)
+
+fun all_except_option(n1 , ns) = 
+    case ns of
+        [] => NONE
+       |n::ns' => if same_string(n1,n)
+                  then SOME ns'
+                  else case all_except_option(n1, ns') of
+                           NONE => NONE
+                          |SOME  ns' => SOME(n::ns')
+
+fun get_substitutions1(sll , s) =
+    case sll of
+        [] => []
+       |sl::sl' => let val gets1 = get_substitutions1(sl',s)
+                   in
+                       case all_except_option(s, sl) of 
+                           NONE => gets1
+                         | SOME ssl => ssl@gets1
+                   end
+
+fun get_substitutions2(sll , s) =
+    let fun aux(sll,s,acc) =
+               case sll of
+                   [] => acc
+                  |sl::sl' => case all_except_option(s, sl) of 
+                                  NONE => aux(sl',s,acc)
+                                | SOME ssl => aux(sl',s,ssl@acc)
+    in
+        aux(sll,s,[])
+    end
+
+fun similar_names (sll, name)=
+    let val {first=x, middle=y,last=z} = name
+        fun create_names sl =
+            case sl of
+                [] => []
+              | s::sl' => {first=s,middle=y,last=z}::(create_names(sl'))
+    in
+        name::create_names(get_substitutions2(sll,x))
+    end
+
+(* you may assume that Num is always used with values 2, 3, ..., 10
+   though it will not really come up *)
+datatype suit = Clubs | Diamonds | Hearts | Spades
+datatype rank = Jack | Queen | King | Ace | Num of int 
+type card = suit * rank
+
+datatype color = Red | Black
+datatype move = Discard of card | Draw 
+
+exception IllegalMove
+
+(* put your solutions for problem 2 here *)
+
+fun card_color c =
+    case c of
+        (Spades,_) => Black
+       |(Clubs,_) => Black
+       |(Diamonds,_) => Red
+       |(Hearts,_) => Red
+
+fun card_value c =
+    case c of
+        (_,Ace) => 11
+      | (_,Num n) => n
+      | (_,_) => 10 
+
+fun remove_card (cs, c, ex) =
+    case cs of
+        [] => raise ex
+      | s::cs' => if s=c
+                  then cs'
+                  else remove_card(cs', c, ex)
+     
